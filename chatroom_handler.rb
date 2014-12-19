@@ -24,8 +24,9 @@ class ChatroomHandler
 		port = $1
 
 		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s(\w.*)\s\z/
+		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
 		client_name = $1
+		puts client_name
 
 		if client_name.nil?
 			client.puts "ERROR_CODE:1"
@@ -34,7 +35,7 @@ class ChatroomHandler
 		end
 
 		if !@clients.has_key?(client_name)
-			@clients[client_name] = Client.new(client_name, @clients.size, client)
+			@clients[client_name] = Client.new(client_name, @clients.length, client)
 		end
 
 		if !@chatrooms.has_key?(room_name)
@@ -52,7 +53,7 @@ class ChatroomHandler
 		end
 
 		join_id = client.gets
-		join_id =~ /\AJOIN_ID:\s(\w.*)\s*\z/
+		join_id =~ /\AJOIN_ID:\s*(\w.*)\s*\z/
 		join_id = $1
 		if join_id.nil?
 			client.puts "ERROR_CODE:2"
@@ -61,7 +62,7 @@ class ChatroomHandler
 		end
 
 		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s(\w.*)\s*\z/
+		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
 		client_name = $1
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
@@ -75,7 +76,7 @@ class ChatroomHandler
 			return
 		end
 
-		@chatrooms[room_name].remove_client(client)
+		@chatrooms[room_name].remove_client(@clients[client_name])
 	end
 
 	def disconnect(client)
@@ -84,7 +85,7 @@ class ChatroomHandler
 		port = $1
 
 		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s(\w.*)\s*\z/
+		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
 		client_name = $1
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
@@ -102,7 +103,7 @@ class ChatroomHandler
 
 	def chat(client, room_ref)
 		join_id = client.gets
-		join_id =~ /\AJOIN_ID:\s(\w.*)\s*\z/
+		join_id =~ /\AJOIN_ID:\s*(\w.*)\s*\z/
 		join_id = $1
 		if join_id.nil?
 			client.puts "ERROR_CODE:2"
@@ -111,7 +112,7 @@ class ChatroomHandler
 		end
 
 		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s(\w.*)\s*\z/
+		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
 		client_name = $1
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
@@ -120,7 +121,7 @@ class ChatroomHandler
 		end
 
 		message = client.gets
-		message =~ /\AMESSAGE:\s(.*)\s*\z/
+		message =~ /\AMESSAGE:\s*(.*)\s*\z/
 		message = $1
 		if message.nil?
 			client.puts "ERROR_CODE:5"
@@ -134,12 +135,23 @@ class ChatroomHandler
 			return
 		end
 
-		@chatrooms[room_name].chat(message, client)
+		chat_exists = false
+		@chatrooms.each do |key, chatroom|
+			if chatroom.room_ref == room_ref.to_i
+				chatroom.chat(message, @clients[client_name])
+				chat_exists = true
+			end
+		end
+
+		if !chat_exists
+			client.puts "ERROR_CODE:6"
+			client.puts "ERROR_DESCRIPTION:Invalid room_ref"
+		end
 	end
 
 	def authenticate_user(client_name, join_id)
-		if @client_list.has_key?(client_name)
-			return @client_list[client_name].join_id == join_id
+		if @clients.has_key?(client_name)
+			return @clients[client_name].join_id.to_i == join_id.to_i
 		else
 			return false
 		end
