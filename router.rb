@@ -1,30 +1,31 @@
 require 'socket'
 require 'thread'
 
-require_relative 'chatroom_handler.rb'
+require_relative 'chat/chatroom_handler.rb'
+require_relative 'dfs/dfs_handler.rb'
 
 class Router
 
 	def initialize()
-		@chatroom = ChatroomHandler.new
+		@chatroom   = ChatroomHandler.new
+		@filesystem = DFSHandler.new
 	end
 
 	def route(client, request)
-		connection = true
 
 		case request.chomp
 		when /\AKILL_SERVICE\z*/
 			client.puts "Server shutdown"
-			connection = false
-			return
+			return false
 
 		when /\AHELO:\s*(\w.*)\s*\z*/
 			local_ip = UDPSocket.open {|s| s.connect("64.233.187.99", 1); s.addr.last}
 			client.puts "#{$1}\nIP:#{local_ip}\nPort:#{@port_no}\nStudentID:11450212"
-			connection = false
+			return false
+
+		# Cases for Chat module
 
 		when /\AJOIN_CHATROOM:\s*(\w.*)\s*\z/
-			puts "Chat name: #{$1}"
 			@chatroom.join(client, $1)
 
 		when /\ALEAVE_CHATROOM:\s*(\w.*)\s*\z/
@@ -32,20 +33,27 @@ class Router
 
 		when /\ADISCONNECT:\s*(\w.*)\s*\z/
 			@chatroom.disconnect(client)
-			connection = false
+			return false
 
 		when /\ACHAT:\s*(\w.*)\s*\z/
 			@chatroom.chat(client, $1)
+
+		# Cases for DFS here
+
+		when /\AGET_FILE:\s*(\w.*)\s*\z/
+			@filesystem.get($1, client)
+
+		when /\APUT_FILE:\s*(\w.*)\s*\z/
+			@filesystem.put($1, client)
+
 		else
-			client.puts "ERROR_CODE:5"
+			client.puts "ERROR_CODE:7"
 			client.puts "ERROR_DESCRIPTION:Invalid request"
+			return false
 		end
 
-
-		if connection
-			request = client.gets
-			self.route(client, request)
-		end
+		puts "Finished routing"
+		return true
 	end
 
 end

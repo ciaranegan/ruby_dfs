@@ -18,7 +18,18 @@ class ThreadPoolServer
 				Thread.current[:id] = i # Give each thread an ID for easy access later
 				loop do
 					client, message = @jobs.pop # Get a job from the queue
-					@router.route(client, message)
+					connection = true
+					while connection do
+						connection = @router.route(client, message)
+						if connection
+							message = client.gets
+							if message.chomp == "KILL_SERVICE"
+								@server_running = false
+								self.shutdown
+								connection = false
+							end
+						end		
+					end
 					client.close
 				end
 			end
@@ -44,7 +55,7 @@ class ThreadPoolServer
 	end
 
 	def run
-		# Main loop to accep...t incoming messages
+		# Main loop to accept incoming messages
 		puts "Server started"
 		while @server_running == true do
 			client = @server.accept
