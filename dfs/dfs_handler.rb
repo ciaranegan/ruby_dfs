@@ -1,7 +1,10 @@
+require 'socket'
+require 'uri'
+
 class DFSHandler
 
 	def initialize()
-		@root_dir = "files"
+		@root_dir = "server_files"
 		@files    = Hash.new
 	end
 
@@ -9,8 +12,9 @@ class DFSHandler
 		path = File.expand_path("../#{@root_dir}/#{filename}", __FILE__)
 		if File.file?(path)
 			file = File.open(path, 'r')
-			file_content = file.read
-			connection.puts file_content
+			file_contents = file.read
+			connection.puts "CONTENT_LENGTH:#{file_contents.length}"
+			connection.puts "CONTENT:#{URI.escape(file_contents)}"
 			file.close
 		else
 			connection.puts "ERROR_CODE:8"
@@ -21,8 +25,17 @@ class DFSHandler
 	def put(filename, connection)
 		path = File.expand_path("../#{@root_dir}/#{filename}", __FILE__)
 		file = File.open(path, 'wb')
-		file_date = connection.gets
-		file.print file_date
+
+		content_length = connection.gets
+		content_length =~ /\ACONTENT_LENGTH:\s*(\w.*)\s*\z/
+		content_length = $1
+
+		file_data = connection.gets
+		file_data =~ /\ACONTENT:(\w.*)/
+		file_data = URI.unescape($1)
+
+		file_size = file_data.length
+		file.print file_data
 		file.close
 	end
 end

@@ -52,7 +52,6 @@ class Router
 			return false
 		end
 
-		puts "Finished routing"
 		return true
 	end
 
