@@ -13,13 +13,14 @@ class Router
 		connection = true
 
 		case request.chomp
-		when "KILL_SERVICE\n"
+		when /\AKILL_SERVICE\z*/
 			client.puts "Server shutdown"
 			connection = false
+			return
 
-		when /\AHELO\s*(\w.*)\s*\z*/
+		when /\AHELO:\s*(\w.*)\s*\z*/
 			local_ip = UDPSocket.open {|s| s.connect("64.233.187.99", 1); s.addr.last}
-			client.puts "#{$1}IP:#{local_ip}\nPort:#{@port_no}\nStudentID:11450212"
+			client.puts "#{$1}\nIP:#{local_ip}\nPort:#{@port_no}\nStudentID:11450212"
 			connection = false
 
 		when /\AJOIN_CHATROOM:\s*(\w.*)\s*\z/
@@ -35,6 +36,9 @@ class Router
 
 		when /\ACHAT:\s*(\w.*)\s*\z/
 			@chatroom.chat(client, $1)
+		else
+			client.puts "ERROR_CODE:5"
+			client.puts "ERROR_DESCRIPTION:Invalid request"
 		end
 
 

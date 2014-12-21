@@ -12,7 +12,6 @@ attr_writer :clients
 	end
 
 	def add_client(client)
-		puts "ROOM_REF = #{room_ref}"
 		@clients[client.name] = client
 		client.socket.puts "JOINED_CHATROOM:#{@name}"
 		client.socket.puts "SERVER_IP:0"
@@ -22,17 +21,13 @@ attr_writer :clients
 	end
 
 	def remove_client(client)
-		puts "inside function"
 		client.socket.puts "LEFT_CHATROOM:#{@name}"
 		client.socket.puts "JOIN_ID:#{client.join_id}"
 		@clients.delete(client)
-		puts "Done function"
 	end
 
 	def chat(message, client)
-		puts "inside chat finction with message '#{message}'"
 		@clients.each do |key, client|
-			puts "Sending chat"
 			client.socket.puts "CHAT:#{room_ref}"
 			client.socket.puts "CLIENT_NAME:#{client.name}"
 			client.socket.puts "MESSAGE:#{message}"

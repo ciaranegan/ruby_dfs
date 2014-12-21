@@ -26,7 +26,6 @@ class ThreadPoolServer
 		# Set up TCPServer and start
 		@server = TCPServer.new port_no
 		@server_running = true
-		self.run
 	end
 
 	def schedule(client, message)
@@ -45,18 +44,20 @@ class ThreadPoolServer
 	end
 
 	def run
-		# Main loop to accept incoming messages
+		# Main loop to accep...t incoming messages
 		puts "Server started"
 		while @server_running == true do
 			client = @server.accept
 			message = client.gets
-			puts message
-			schedule(client, message)
-			# Updates the loop condition based on the message
-			@server_running = (message != "KILL_SERVICE\n")
+			
+			if message.chomp == "KILL_SERVICE"
+				@server_running = false
+				self.shutdown
+			else
+				schedule(client, message)
+			end
+			
 		end
-		# Shutsdown once a kill_service message is received
-		self.shutdown
 	end
 end
 
@@ -67,4 +68,5 @@ if $0 == __FILE__
 		port_no = ARGV[0]
 	end
 	server = ThreadPoolServer.new(150, port_no)
+	server.run
 end
