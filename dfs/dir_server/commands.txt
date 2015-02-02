@@ -1,0 +1,11 @@
+CREATE TABLE FileServer(
+	server_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ip_addr TEXT,
+	port INT
+);
+
+CREATE TABLE FileRef(
+	filename TEXT PRIMARY KEY,
+	server INT,
+	FOREIGN KEY(server) REFERENCES FileServer(id)
+);

@@ -9,4 +9,3 @@ port_no=8000
 fi
 
 ruby dfs/dir_server/server.rb $port_no -d
-# ; ruby dfs/file_server/server.rb $port_no+1 -d;

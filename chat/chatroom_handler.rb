@@ -15,18 +15,9 @@ class ChatroomHandler
 			return
 		end
 
-		client_ip = client.gets
-		client_ip =~ /\ACLIENT_IP:\s*(\w.*)\s*\z/
-		client_ip = $1
-
-		port = client.gets
-		port =~ /\APORT:\s*(\w.*)\s*\z/
-		port = $1
-
-		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
-		client_name = $1
-		puts client_name
+		client_ip = regex_match(client, /\ACLIENT_IP:\s*(\w.*)\s*\z/)
+		port = regex_match(client, /\APORT:\s*(\w.*)\s*\z/)
+		client_name = regex_match(client, /\ACLIENT_NAME:\s*(\w.*)\s*\z/)
 
 		if client_name.nil?
 			client.puts "ERROR_CODE:1"
@@ -52,18 +43,14 @@ class ChatroomHandler
 			return
 		end
 
-		join_id = client.gets
-		join_id =~ /\AJOIN_ID:\s*(\w.*)\s*\z/
-		join_id = $1
+		join_id = regex_match(client, /\AJOIN_ID:\s*(\w.*)\s*\z/)
 		if join_id.nil?
 			client.puts "ERROR_CODE:2"
 			client.puts "ERROR_DESCRIPTION:Invalid join_id"
 			return
 		end
 
-		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
-		client_name = $1
+		client_name = regex_match(client, /\ACLIENT_NAME:\s*(\w.*)\s*\z/)
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
 			client.puts "ERROR_DESCRIPTION:Invalid username"
@@ -80,13 +67,9 @@ class ChatroomHandler
 	end
 
 	def disconnect(client)
-		port = client.gets
-		port =~ /\APORT:\s*(\w.*)\s*\z/
-		port = $1
+		port = regex_match(client, /\APORT:\s*(\w.*)\s*\z/)
 
-		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
-		client_name = $1
+		client_name = regex_match(client, /\ACLIENT_NAME:\s*(\w.*)\s*\z/)
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
 			client.puts "ERROR_DESCRIPTION:Invalid username"
@@ -102,27 +85,22 @@ class ChatroomHandler
 	end
 
 	def chat(client, room_ref)
-		join_id = client.gets
-		join_id =~ /\AJOIN_ID:\s*(\w.*)\s*\z/
-		join_id = $1
+		join_id = regex_match(client, /\AJOIN_ID:\s*(\w.*)\s*\z/)
 		if join_id.nil?
 			client.puts "ERROR_CODE:2"
 			client.puts "ERROR_DESCRIPTION:Invalid join_id"
 			return
 		end
 
-		client_name = client.gets
-		client_name =~ /\ACLIENT_NAME:\s*(\w.*)\s*\z/
-		client_name = $1
+		client_name = regex_match(client, /\ACLIENT_NAME:\s*(\w.*)\s*\z/)
+
 		if client_name.nil? || !@clients.has_key?(client_name)
 			client.puts "ERROR_CODE:1"
 			client.puts "ERROR_DESCRIPTION:Invalid username"
 			return
 		end
 
-		message = client.gets
-		message =~ /\AMESSAGE:\s*(.*)\s*\z/
-		message = $1
+		message = regex_match(client, /\AMESSAGE:\s*(.*)\s*\z/)
 		if message.nil?
 			client.puts "ERROR_CODE:5"
 			client.puts "ERROR_DESCRIPTION:No message provided"
@@ -155,5 +133,11 @@ class ChatroomHandler
 		else
 			return false
 		end
+	end
+
+	def regex_match(connection, regex)
+		arg = connection.gets
+		arg =~ regex
+		return $1
 	end
 end

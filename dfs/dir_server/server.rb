@@ -60,7 +60,7 @@ class ThreadPoolServer
 		while @server_running == true do
 			client = @server.accept
 			message = client.gets
-			
+			puts message
 			if message.chomp == "KILL_SERVICE"
 				@server_running = false
 				self.shutdown
